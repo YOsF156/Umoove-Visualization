@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { dataContext } from "../../context/manageContext";
 
 const SppHeatMap = ({
   dataArray,
@@ -10,12 +11,14 @@ const SppHeatMap = ({
   mode,
   onProccessDone,
 }) => {
+  let pfxMethod = type == 'pfx';
   const canvasRef = useRef();
   const canvasRef1 = useRef();
   const [cellsX, setCellsX] = useState(100);
   const [cellsY, setCellsY] = useState(60);
   const [cellsXs, setCellsXs] = useState(100);
   const [cellsYs, setCellsYs] = useState(60);
+  const data = useContext(dataContext);
   let canvasWidth = 195;
   let canvasHeight = (cellsY / cellsX) * canvasWidth;
   var heatMapD = [];
@@ -23,10 +26,11 @@ const SppHeatMap = ({
   let localArray = [];
   useEffect(() => {
     for (let i = 0; i < dataArray.length; i++) {
-      const element = dataArray[i];
+      let element = dataArray[i];
+      element = pfxMethod ? element : element.eye_data
       localArray.push({
-        x: element.eye_Data[3],
-        y: element.eye_Data[4],
+        x: element[23],
+        y: element[24],
         // x: element.eye_Data[eye === 1 ? 8 : 10],
         // y: element.eye_Data[eye === 1 ? 9 : 11],
       });
@@ -58,10 +62,29 @@ const SppHeatMap = ({
     var lastLocY = -10;
 
     let boxSize = 4;
+    let useLastKnownData = false;
+    let lastKnownX;
+    let lastKnownY;
+
     for (let w = 0; w < localArray.length; w++) {
+      if (useLastKnownData) {
+        //Handle data with -99
+        if (localArray[w].x === -99) {
+          if (lastKnownX) {
+            localArray[w].x = lastKnownX;
+            localArray[w].y = lastKnownY;
+          }
+        } else {
+          lastKnownX = localArray[w].x;
+          lastKnownY = localArray[w].y;
+        }
+      }
+      //
       if (Math.abs(localArray[w].x) < 0.25) {
         centerAvgCounterX++;
         centerAvgX += localArray[w].x;
+        console.log("avg", centerAvgX);
+
         centerAvgCounterY++;
         centerAvgY += localArray[w].y;
       }
@@ -99,14 +122,14 @@ const SppHeatMap = ({
           currentEye.x < 0
             ? 0
             : currentEye.x >= cellsX
-            ? cellsX - 1
-            : currentEye.x;
+              ? cellsX - 1
+              : currentEye.x;
         let locY =
           currentEye.y < 0
             ? 0
             : currentEye.y >= cellsY
-            ? cellsY - 1
-            : currentEye.y;
+              ? cellsY - 1
+              : currentEye.y;
 
         let pos = locY * cellsX + locX;
 
@@ -159,7 +182,7 @@ const SppHeatMap = ({
     let leftBottom = 0;
     let rightTop = 0;
     let rightBottom = 0;
-    let logItOut = false;
+    let logItOut = true;
 
     for (let index = 0; index < heatMapCounter.length; index++) {
       let value = heatMapCounter[index];
@@ -198,9 +221,17 @@ const SppHeatMap = ({
       leftTop,
     };
     if (logItOut) {
-      // console.table({ leftTop, leftBottom, rightTop, rightBottom });
+      console.log(
+        "LT",
+        leftTop,
+        "LB",
+        leftBottom,
+        "RT",
+        rightTop,
+        "RB",
+        rightBottom
+      );
     }
-
     return heatMapD;
   }
 
@@ -225,14 +256,14 @@ const SppHeatMap = ({
           currentEye.x < 0
             ? 0
             : currentEye.x >= cellsXs
-            ? cellsXs - 1
-            : currentEye.x;
+              ? cellsXs - 1
+              : currentEye.x;
         let locY =
           currentEye.y < 0
             ? 0
             : currentEye.y >= cellsYs
-            ? cellsYs - 1
-            : currentEye.y;
+              ? cellsYs - 1
+              : currentEye.y;
 
         let pos = locY * cellsXs + locX;
 
@@ -291,10 +322,19 @@ const SppHeatMap = ({
     }
   }
   // For cellsX use 10 for cellsY use 6 and eyeDataArray you send either the preEyeData or the postEyeData
-  let UMFace = dataArray[playIndex]?.eye_Data[0];
-  let UM_faceX = dataArray[playIndex]?.eye_Data[1];
-  let UM_faceY = dataArray[playIndex]?.eye_Data[2];
-  let UM_Diam = dataArray[playIndex]?.eye_Data[6];
+  let dataInfo;
+  if (!pfxMethod) {
+    dataInfo = dataArray[playIndex].eye_Data;
+  } else {
+    dataInfo = dataArray[playIndex];
+  }
+  let UMFace = dataInfo[pfxMethod ? 2 : 0];
+  let UM_faceX = dataInfo[pfxMethod ? 9 : 1];
+  let UM_faceY = dataInfo[pfxMethod ? 10 : 2];
+  let UM_Diam = dataInfo[pfxMethod ? 14 : 6];
+  let UMReliability = dataInfo[pfxMethod ? 7 : 0];
+  console.log("🚀 ~ file: SppHeatMap.js:336 ~ dataInfo:", dataInfo)
+  let UMirisPixFiltered = eye === 1 ? { x: dataInfo[pfxMethod ? 17 : 15], y: dataInfo[pfxMethod ? 18 : 16] } : { x: dataInfo[pfxMethod ? 15 : 9], y: dataInfo[pfxMethod ? 16 : 10] }
   return (
     <div
       style={{
@@ -310,29 +350,39 @@ const SppHeatMap = ({
         <li>Face state: {UMFace}</li>
         <li>
           Reliability:{" "}
-          {eye === 1 ? eyesReliability.left : eyesReliability.right}
+          {UMReliability}
+          {/* {eye === 1 ? eyesReliability.left : eyesReliability.right} */}
         </li>
-        <li>
+        {/* <li>
           Eye:
           {`{
 
-            ${dataArray[playIndex]?.eye_Data[eye === 1 ? 8 : 10]
+            ${dataInfo[eye === 1 ? 8 : 10]
               .toString()
               .slice(0, 5)}
           ,
-          ${dataArray[playIndex]?.eye_Data[eye === 1 ? 9 : 11]
+          ${dataInfo[eye === 1 ? 9 : 11]
             .toString()
             .slice(0, 5)}
           }`}
-        </li>
+        </li> */}
 
         <li>
           Face:
           {`{
 
-${Math.floor(UM_faceX)}
+${Number(UM_faceX).toFixed(1)}
 ,
-${Math.floor(UM_faceY)}
+${Number(UM_faceY).toFixed(1)}
+}`}
+        </li>
+        <li>
+          eye:
+          {`{
+
+ ${Number(UMirisPixFiltered.x).toFixed(1)}
+,
+ ${Number(UMirisPixFiltered.y).toFixed(1)}
 }`}
         </li>
         <li>Diam: {UM_Diam}</li>

@@ -42,7 +42,7 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
       newStud?.questions.map((ques, quesIndex) => {
         areasResults = {};
         localArray = [];
-        if (quesIndex + 1 > 4 || questionIndex + 1 === 3) {
+        if (quesIndex + 1 > 4) {
           console.log("working");
           for (let i = 0; i < ques.eye_data.length; i++) {
             const element = ques.eye_data[i];
@@ -52,14 +52,12 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
             });
           }
           //
-          for (let i = 0; i < 1; i++) {
-            heatMapD = peekHeatMapCreator(quesIndex + 1);
-          }
-          let image = drawTheHeatmap(heatMapD);
-          //Judge the areas
-          if (newStud.studentId === "Pilot-Y5WC01" && quesIndex === 5) {
+          if (newStud.studentId === "Pilot-Y5WC03" && quesIndex + 1 === 3) {
             console.log("x");
           }
+          heatMapD = peekHeatMapCreator(quesIndex);
+          // let image = drawTheHeatmap(heatMapD);
+          //Judge the areas
           if (
             areasResults.rightTop + areasResults.rightBottom >
             decisionThreshold
@@ -82,7 +80,7 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
           tempRes = [
             ...tempRes,
             {
-              img: image,
+              // img: image,
               areasResults,
               question: quesIndex,
               desicion: finalDesicion,
@@ -107,6 +105,7 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
       let userResults = {
         _id: newStud._id,
         studentId: newStud.studentId,
+        school: newStud.school,
         results: tempRes,
       };
       setMainResults(userResults);
@@ -138,17 +137,28 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
     let ques5maxRange = 260;
     let ques6minRange = 130;
     let ques6maxRange = 283;
-    let minRange = quesIndex === 5 ? 95 : 130;
-    let maxRange = quesIndex === 5 ? 260 : 283;
+    let minRange = quesIndex + 1 === 5 ? 95 : quesIndex + 1 === 6 ? 130 : 180;
+    let maxRange = quesIndex + 1 === 5 ? 260 : localArray.length;
+    // let maxRange = quesIndex === 5 ? localArray.length : localArray.length;
     for (let a = 0; a < cellsY * cellsX; a++) {
       heatMapD.push(0);
       heatMapCounter.push(0);
     }
     var lastLocX = -10;
     var lastLocY = -10;
-
     let boxSize = 4;
+    let lastKnownX;
+    let lastKnownY;
     for (let w = 0; w < localArray.length; w++) {
+      if (localArray[w].x === -99) {
+        if (lastKnownX) {
+          localArray[w].x = lastKnownX;
+          localArray[w].y = lastKnownY;
+        }
+      } else {
+        lastKnownX = localArray[w].x;
+        lastKnownY = localArray[w].y;
+      }
       if (Math.abs(localArray[w].x) < 0.25) {
         centerAvgCounterX++;
         centerAvgX += localArray[w].x;
@@ -178,7 +188,7 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
         let currentEye = { x: 0, y: 0 };
         if (
           localArray[w].x > -99 &&
-          Math.abs(localArray[w].x - centerAvgX) > 0.15
+          Math.abs(localArray[w].x - centerAvgX) > 0.2
         ) {
           currentEye.x = Math.round(
             ((localArray[w].x - xMin) / (xMax - xMin)) * (cellsX - 1)
@@ -248,7 +258,6 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
     }
 
     let logItOut = false;
-
     for (let index = 0; index < heatMapCounter.length; index++) {
       let value = heatMapCounter[index];
       if (value > 0) {
@@ -258,10 +267,6 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
       let lY = Math.floor(index / cellsX);
       let xDiff = lX - centerPosX;
       let yDiff = lY - centerPosY;
-      if (index > 100) {
-        ///
-        let y = 1;
-      }
       let higherNum = 0;
       let lowerNum = 0;
       if (xDiff >= higherNum && yDiff >= higherNum) {
@@ -285,7 +290,7 @@ const AnalyzeSppHeatMap = ({ studentId, setMainResults }) => {
       leftTop,
     };
     if (logItOut) {
-      console.log(leftTop, leftBottom, rightTop, rightBottom);
+      // console.log(leftTop, leftBottom, rightTop, rightBottom);
     }
 
     return heatMapD;

@@ -15,7 +15,7 @@ const ChooseAction = () => {
     </>
   );
 };
-export const Visualization = () => {
+export const Visualization = (type = '') => {
   const data = useContext(dataContext);
   return (
     <>
@@ -24,6 +24,7 @@ export const Visualization = () => {
     </>
   );
 };
+let Styles = { td: "textAlign:center,color:red" };
 export const Analyze = () => {
   const data = useContext(dataContext);
   let canvasRef = useRef();
@@ -34,11 +35,10 @@ export const Analyze = () => {
   const [enableButton, setEnableButton] = useState(false);
   const [excludedUsers, setExcludedUsers] = useState([]);
   useEffect(() => {
-    if (mainResults.length >=students.length) {
-      setTimeout(()=>{
-
+    if (mainResults.length >= students.length) {
+      setTimeout(() => {
         setEnableButton(true);
-      },3000)
+      }, 3000);
     }
   }, [mainResults]);
   let loadStudents = async () => {
@@ -50,7 +50,8 @@ export const Analyze = () => {
     setStudents(res);
   };
   useEffect(() => {
-    loadStudents();
+    if (data.selectedMethod !== 'pfx')
+      loadStudents();
   }, []);
 
   let onStudentClicked = (user) => {
@@ -66,6 +67,38 @@ export const Analyze = () => {
       const student = students[index];
       // let res  = AnalyzeSppHeatMap(student._id)
     }
+  };
+  let CSVoutput = "School,Student Id,q5,q6\n";
+  let loadCsv = (data) => {
+    for (let index = 0; index < data.length; index++) {
+      const element = data[index];
+      CSVoutput += `${element.school},${element.studentId},${element.results[0].desicion
+          ? "V"
+          : element.results[0].traveling
+            ? "T"
+            : "X"
+        },${element.results[1].desicion
+          ? "V"
+          : element.results[1].traveling
+            ? "T"
+            : "X"
+        }\n`;
+    }
+    console.log(CSVoutput);
+    saveCsvOutput()
+    //Called when new data available
+  };
+  let saveCsvOutput = () => {
+    const a = document.createElement("a");
+    const blob = new Blob([CSVoutput], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    a.href = url;
+    a.download = "myFile.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+    // This will download the data file named "my_data.csv".
   };
   return (
     <>
@@ -127,59 +160,58 @@ export const Analyze = () => {
       )}
       {doneWithAll && (
         <div style={{ margin: "auto", width: "fit-content" }}>
-          <h1>Results</h1>
-          {mainResults.map((res) => {
-            return (
-              <div
-                style={{
-                  border: "1px solid red",
-                  margin: "8px",
-                  width: "fit-content",
-                }}
-              >
-                <h5>{res.studentId}</h5>
-                {res.results.map((ques) => {
-                  return (
-                    <div
-                      style={{
-                        border: "1px solid",
-                        margin: "8px",
-                        width: "fit-content",
-                      }}
-                    >
-                      Question number : {ques.question + 1}
-                      <br />
-                      Areas :<br /> left top: {ques.areasResults.leftTop} <br />
-                      right top: {ques.areasResults.rightTop}
-                      <br />
-                      right bottom: {ques.areasResults.rightBottom}
-                      <br />
-                      left bottom: {ques.areasResults.leftBottom}
-                      <br />
-                      Desicion:{ques.desicion ? "True" : "False"}
-                      <br />
-                      Traveling:{ques.traveling ? "True" : "False"}
-                      <br />
-                      <img src={ques.img.src} />
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+          <table>
+            <h1>Results</h1>
+            {mainResults.map((res) => {
+              return (
+                <div
+                  style={{
+                    border: "1px solid",
+                    margin: "auto",
+                    margin: "10px",
+                  }}
+                >
+                  <th style={{ color: "red" }}>Student: {res.studentId}</th>
+
+                  {res.results.map((ques) => {
+                    return (
+                      <tr>
+                        <tr>
+                          {/* <td>Student Id </td> */}
+                          <th>Question</th>
+                          <th>Spp</th>
+                          <th>Traveling</th>
+                        </tr>
+
+                        <tr style={{ border: "1px solid" }}>
+                          {/* <td>{res.studentId}</td> */}
+                          <td>{ques.question + 1}</td>
+                          <td>{ques.desicion ? "V" : "X"}</td>
+                          <td>{ques.traveling ? "V" : "X"}</td>
+                        </tr>
+                      </tr>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </table>
         </div>
       )}
       {enableButton && (
         <button
           onClick={() => {
             setMainResults((prev) =>
-              prev.filter(
-                (v, i, a) => a.findIndex((v2) => v2._id === v._id) === i
-              ).sort((a,b)=>a.studentId===b.studentId)
+              prev
+                .filter(
+                  (v, i, a) => a.findIndex((v2) => v2._id === v._id) === i
+                )
+                .sort((a, b) => a.studentId === b.studentId)
             );
-            
+
             console.log("main res", mainResults.length);
-            setDoneWithAll(true);
+            loadCsv(mainResults);
+            // setDoneWithAll(true);
           }}
         >
           Analyze is ready,click here to see{" "}

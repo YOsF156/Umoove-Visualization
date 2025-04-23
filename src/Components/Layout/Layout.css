@@ -1,5 +1,6 @@
 .mainLayout {
-  width: 100%;
+  width: 97%;
+  margin: auto;
   min-height: 80%;
   padding-top: 20px;
 }

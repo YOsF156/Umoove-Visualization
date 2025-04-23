@@ -1,9 +1,19 @@
-.studentDetails{
-    cursor: pointer;
-    background-color: lightblue;
+.studentDetails {
+  cursor: pointer;
+  background-color: lightblue;
 }
-.studentDetails:hover{
-    cursor: pointer;
-    background-color: rgb(36, 106, 153);
-    color: black;
+.studentDetails:hover {
+  cursor: pointer;
+  background-color: rgb(36, 106, 153);
+  color: black;
+}
+table {
+  border: 1px solid red;
+}
+tr {
+  /* border: 1px solid red; */
+}
+td {
+  /* color:red; */
+  text-align: center;
 }

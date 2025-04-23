@@ -80,12 +80,14 @@ const Controls = ({
     console.log("dr", dataArray);
     dataArray.map((el) => {
       let element = el.eye_Data;
-      if (element[8] > -99 && element[10] > -99) {
-        leftX.push(element[8]);
-        leftY.push(element[9]);
-        rightX.push(element[10]);
-        rightY.push(element[11]);
-        lab.push("");
+      if(element){
+        if (element[8]||0 > -99 && element[10]||0 > -99) {
+          leftX.push(element[8]||0);
+          leftY.push(element[9]||0);
+          rightX.push(element[10]||0);
+          rightY.push(element[11]||0);
+          lab.push("");
+        }
       }
     });
 

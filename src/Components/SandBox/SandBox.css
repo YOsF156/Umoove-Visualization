@@ -1,6 +1,6 @@
 .visualizationDiv {
   /* border: 1px solid red; */
-  width: 58.5%;
+  min-width: 55%;
   margin: auto;
   height: 45%;
   min-height: 450px;
@@ -70,4 +70,12 @@
 .faceCenter img {
   width: 30px;
   height: 30px;
+}
+
+.canvases-container {
+  /* padding-right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column; */
 }

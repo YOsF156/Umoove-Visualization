@@ -7,7 +7,8 @@ import Controls from "../Controls/Controls";
 import { mainDataArray } from "../../files/try";
 import SppHeatMap from "../SppHeatMap/SppHeatMap";
 import { dataContext } from "../../context/manageContext";
-const Sandbox = () => {
+const Sandbox = ({ type = "" }) => {
+  let pfxMethod = type == "pfx";
   let showCombined = true;
   const data = useContext(dataContext);
   const sandBoxRef = useRef();
@@ -48,21 +49,49 @@ const Sandbox = () => {
   const [topLimit, setTopLimit] = useState(false);
   const [bottomLimit, setBottomLimit] = useState(0);
   const [intervalSpeed, setIntervalSpeed] = useState(10);
+  let faceState;
+  let UM_leftEyeX;
+  let UM_leftEyeY;
+  let UM_rightEyeX;
+  let UM_rightEyeY;
+  let UM_combinedEyeX;
+  let UM_combinedEyeY;
+  let UM_faceX;
+  let UM_faceY;
+  let gap;
+  let positions = {
+    pfx: {
+      LogId: 0,
+      UM_combinedEyeX: 23,
+      UM_combinedEyeY: 24,
+      faceState: 2,
+      UM_leftEyeX: 3,
+      UM_leftEyeY: 4,
+      UM_rightEyeX: 5,
+      UM_rightEyeY: 6,
+      UM_faceX: 9,
+      UM_faceY: 10,
+    },
+  };
+
+  useEffect(() => {
+    // console.log("data", data.data);
+  }, []);
   let changeQuestionNum = (type) => {
     stopInterval();
     if (type === "next") {
       if (questionNum < data.data?.questions?.length) {
         setQuestionNum((prev) => prev + 1);
         setPlayIndex(0);
-        setDataArray(data.data.questions[questionNum ].eye_data);
+        setDataArray(data.data.questions[questionNum].eye_data);
         setTopLimit(data.data.questions[questionNum].eye_data.length);
       }
     } else if (type === "prev") {
       if (questionNum > 1) {
         setQuestionNum((prev) => prev - 1);
         setPlayIndex(0);
-        setDataArray(data.data.questions[questionNum ].eye_data);
-        setTopLimit(data.data.questions[questionNum ].eye_data.length);
+        setDataArray(data.data.questions[questionNum].eye_data);
+        setTopLimit(data.data.questions[questionNum].eye_data.length);
       }
     }
   };
@@ -90,29 +119,46 @@ const Sandbox = () => {
       // index = 0;
     }
     //Use umoove data by Matt's data
-    let gap = dataArray[index].timestamp - dataArray[0].timestamp;
-    setTimeGap(gap);
-    let faceState = dataArray[index].eye_Data[0] === 2;
-    let UM_leftEyeX = dataArray[index].eye_Data[data.cmMode ? 8 : 14];
-    let UM_leftEyeY = dataArray[index].eye_Data[data.cmMode ? 9 : 15];
-    let UM_rightEyeX = dataArray[index].eye_Data[data.cmMode ? 10 : 16];
-    let UM_rightEyeY = dataArray[index].eye_Data[data.cmMode ? 11 : 17];
-    let UM_combinedEyeX = dataArray[index].eye_Data[3];
-    let UM_combinedEyeY = dataArray[index].eye_Data[4];
-    let UM_faceX = dataArray[index].eye_Data[1];
-    let UM_faceY = dataArray[index].eye_Data[2];
-    //reliability
-    setEyesReliability({
-      left: dataArray[index].eye_Data[12],
-      right: dataArray[index].eye_Data[13],
-    });
-    //Diam
-    if (!data.cmMode) {
-      setEyeWidth(dataArray[index]?.eye_Data[6]);
+    if (data.selectedMethod !== "pfx") {
+      gap = dataArray[index].timestamp - dataArray[0].timestamp;
+      setTimeGap(gap);
+      faceState = dataArray[index].eye_Data[0] === 2;
+      UM_leftEyeX = dataArray[index].eye_Data[data.cmMode ? 8 : 14];
+      UM_leftEyeY = dataArray[index].eye_Data[data.cmMode ? 9 : 15];
+      UM_rightEyeX = dataArray[index].eye_Data[data.cmMode ? 10 : 16];
+      UM_rightEyeY = dataArray[index].eye_Data[data.cmMode ? 11 : 17];
+      UM_combinedEyeX = dataArray[index].eye_Data[3];
+      UM_combinedEyeY = dataArray[index].eye_Data[4];
+      UM_faceX = dataArray[index].eye_Data[1];
+      UM_faceY = dataArray[index].eye_Data[2];
+      //reliability
+      setEyesReliability({
+        left: dataArray[index].eye_Data[12],
+        right: dataArray[index].eye_Data[13],
+      });
+
+      //Diam
+      if (!data.cmMode) {
+        setEyeWidth(dataArray[index]?.eye_Data[6]);
+      }
+    } else {
+      faceState = dataArray[index][2] === 2;
+      UM_leftEyeX = dataArray[index][data.cmMode ? 15 : 3];
+      UM_leftEyeY = dataArray[index][data.cmMode ? 16 : 4];
+      UM_rightEyeX = dataArray[index][data.cmMode ? 17 : 5];
+      UM_rightEyeY = dataArray[index][data.cmMode ? 18 : 6];
+      UM_combinedEyeX = dataArray[index][23];
+      UM_combinedEyeY = dataArray[index][24];
+      UM_faceX = dataArray[index][9];
+      UM_faceY = dataArray[index][10];
+      if (!data.cmMode) {
+        setEyeWidth(parseFloat(dataArray[index][14]));
+      }
     }
     if (!type) {
       index++;
     }
+
     setPlayIndex(index);
 
     //usage
@@ -171,9 +217,9 @@ const Sandbox = () => {
       if (UM_combinedEyeX === -99 || UM_combinedEyeY === -99) {
         setCombinedEyeNotVisible(true);
       } else {
-        let newX = eyesLoc?.combined?.x + UM_combinedEyeX * pxToCm;
+        let newX = UM_combinedEyeX;
         setCombinedEyeX(newX);
-        let newY = eyesLoc?.combined?.y + UM_combinedEyeY * pxToCm;
+        let newY = UM_combinedEyeY;
         setCombinedEyeY(newY);
         setCombinedEyeNotVisible(false);
       }
@@ -232,7 +278,7 @@ const Sandbox = () => {
     let fact =
       Math.abs(
         leftEyeCenterRef.current.offsetLeft -
-          rightEyeCenterRef.current.offsetLeft
+        rightEyeCenterRef.current.offsetLeft
       ) / 6.5;
     if (data.cmMode) {
       // setFace;
@@ -245,13 +291,19 @@ const Sandbox = () => {
     if (data.cmMode) {
       updateFactor();
     }
-    console.log(data.data?.questions[0]);
-    setDataArray(data.data?.questions[0]?.eye_data);
-    setTopLimit(data.data.questions[0].eye_data.length);
 
+    let dataInfo;
+    if (type !== "pfx") {
+      dataInfo = data.data?.questions[0].eye_Data;
+    } else {
+      dataInfo = data.data;
+    }
+    setDataArray(dataInfo);
+    setTopLimit(dataInfo.length);
     setSandboxHeight(sandBoxRef.current.clientHeight);
     setSandboxWidth(sandBoxRef.current.clientWidth);
     setInitialGap(-(sandBoxRef.current.clientWidth / 2));
+    console.log("titles", data.pfxStateLog);
   }, []);
   useEffect(() => {
     //check Location
@@ -259,28 +311,80 @@ const Sandbox = () => {
       if (
         eyesLoc.left.x !==
         leftEyeCenterRef.current.offsetLeft +
-          leftEyeCenterRef.current.clientWidth / 2
+        leftEyeCenterRef.current.clientWidth / 2
       ) {
         updateFactor();
       }
     }
   });
+  console.log(dataArray)
   return (
     <>
       <div
         className="top"
         style={{ display: "flex", justifyContent: "space-around" }}
       >
-        <div style={{ border: "3px solid white" }}>
-          <SppHeatMap
-            eyesReliability={eyesReliability}
-            eye={1}
-            dataArray={dataArray}
-            playIndex={playIndex}
-            bottomLimit={bottomLimit}
-            style={{ margin: "auto" }}
-          />
+        <div style={{ width: "20%" }}>
+          {pfxMethod && dataArray[playIndex] && (
+            <div>
+              <div
+                style={{
+                  border: "1px solid black",
+                  padding: "10px",
+                  minWidth: "120px",
+                }}
+              >
+                <h3>Eye data:</h3>
+                <br />
+                <div>
+                  Log id: {dataArray[playIndex][positions.pfx.LogId] || -1}
+                </div>
+                <div>
+                  Face state:{" "}
+                  {dataArray[playIndex][positions.pfx.faceState] || -1}
+                </div>
+                <div>
+                  eye:{" "}
+                  {dataArray[playIndex][positions.pfx.UM_combinedEyeX]
+                    ?.toString()
+                    .slice(0, 5) || -1}
+                  ,
+                  {dataArray[playIndex][positions.pfx.UM_combinedEyeY]
+                    ?.toString()
+                    .slice(0, 5) || -1}
+                </div>
+                <div>
+                  face:{" "}
+                  {dataArray[playIndex][positions.pfx.UM_faceX]
+                    ?.toString()
+                    .slice(0, 5) || -1}
+                  ,
+                  {dataArray[playIndex][positions.pfx.UM_faceY]
+                    ?.toString()
+                    .slice(0, 5) || -1}
+                </div>
+              </div>
+              <br />
+
+            </div>
+          )}
         </div>
+
+        {/* {!pfxMethod && ( */}
+        <div className="canvases-container" style={{ border: "3px solid white" }}>
+          {dataArray.length > 0 && (
+            <SppHeatMap
+              type={type}
+              eyesReliability={eyesReliability}
+              eye={1}
+              dataArray={dataArray}
+              playIndex={playIndex}
+              bottomLimit={bottomLimit}
+              style={{ margin: "auto" }}
+            />
+          )}
+        </div>
+
         <div className="visualizationDiv" ref={sandBoxRef}>
           <div
             className="eye"
@@ -295,8 +399,8 @@ const Sandbox = () => {
                 leftEyeNotVisible && data.cmMode
                   ? "white"
                   : !data.cmMode && leftEyeNotVisible
-                  ? "red"
-                  : "white",
+                    ? "red"
+                    : "white",
               visibility:
                 leftEyeNotVisible && data.cmMode ? "hidden" : "visible",
             }}
@@ -327,8 +431,8 @@ const Sandbox = () => {
                 rightEyeNotVisible && data.cmMode
                   ? "white"
                   : !data.cmMode && rightEyeNotVisible
-                  ? "red"
-                  : "white",
+                    ? "red"
+                    : "white",
               visibility:
                 rightEyeNotVisible && data.cmMode ? "hidden" : "visible",
             }}
@@ -390,19 +494,20 @@ const Sandbox = () => {
               className="eye"
               id="combinedEye"
               style={{
-                left: combinedEyeX - eyeWidth / 2 + "px",
-                top: combinedEyeY - eyeWidth / 2 + "px",
+                zIndex: 100,
+                left: (combinedEyeX - eyeWidth / 2).toFixed(0) + "px",
+                top: (combinedEyeY - eyeWidth / 2).toFixed(0) + "px",
                 height: eyeWidth,
                 width: eyeWidth,
-                border: "1px solid",
+                border: "4px solid",
                 borderColor:
                   combinedEyeNotVisible && data.cmMode
-                    ? "white"
+                    ? "blue"
                     : !data.cmMode && combinedEyeNotVisible
-                    ? "red"
-                    : "white",
+                      ? "red"
+                      : "blue",
                 visibility:
-                combinedEyeNotVisible && data.cmMode ? "hidden" : "visible",
+                  combinedEyeNotVisible && data.cmMode ? "hidden" : "visible",
               }}
             ></div>
           )}
@@ -423,6 +528,7 @@ const Sandbox = () => {
                 top: faceY - eyeWidth / 2 + "px",
                 height: eyeWidth,
                 width: eyeWidth,
+                border: '10px solid white'
               }}
             >
               <img
@@ -433,25 +539,53 @@ const Sandbox = () => {
           )}
           <ul style={{ color: "white", position: "absolute", bottom: "10px" }}>
             <li>
-              left:
-              {dataArray[playIndex]?.eye_Data[8].toString().slice(0, 5)},
+              eyeData:
+              {/* {dataArray[playIndex]?.eye_Data[8].toString().slice(0, 5)},
               {dataArray[playIndex]?.eye_Data[9].toString().slice(0, 5)}, right:
               {dataArray[playIndex]?.eye_Data[10].toString().slice(0, 5)},
-              {dataArray[playIndex]?.eye_Data[11].toString().slice(0, 5)},<br />
+              {dataArray[playIndex]?.eye_Data[11].toString().slice(0, 5)},<br /> */}
             </li>
           </ul>
         </div>
+        {!pfxMethod && (
+          <div style={{ border: "3px solid white" }}>
+            <SppHeatMap
+              eye={2}
+              eyesReliability={eyesReliability}
+              dataArray={dataArray}
+              playIndex={playIndex}
+              bottomLimit={bottomLimit}
+              style={{ margin: "auto" }}
+            />
+          </div>
+        )}
 
-        {/* <div style={{ border: "3px solid white" }}>
-          <SppHeatMap
-            eye={2}
-            eyesReliability={eyesReliability}
-            dataArray={dataArray}
-            playIndex={playIndex}
-            bottomLimit={bottomLimit}
-            style={{ margin: "auto" }}
-          />
-        </div> */}
+        <div style={{ width: "20%", border: '1px solid ', maxHeight: '75vh', overflowY: 'auto' }}>
+          {data.pfxStateLog && (
+            <div style={{ width: "98%" }}>
+              <div style={{ width: "100%", }}>
+                State log data:
+                <table>
+                  {dataArray[playIndex] && data.pfxStateLogTitles.map((t, ind) => {
+                    return (
+                      <tr>
+                        {t} :
+                        {
+                          data.pfxStateLog[
+                          Math.max(0, dataArray[playIndex][positions.pfx.LogId] - 1)
+                          ][ind]
+                        }
+                        {t == "Time" && console.log(data.pfxStateLog[
+                          Math.max(0, dataArray[playIndex][positions.pfx.LogId] - 1)
+                        ][ind])}
+                      </tr>
+                    );
+                  })}
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <div style={{ display: "flex" }}>
         <Controls
@@ -467,14 +601,20 @@ const Sandbox = () => {
           }}
           bottomLimit={bottomLimit}
           topLimit={topLimit}
-          changeQuestionNum={(type = "next") => changeQuestionNum(type)}
+          changeQuestionNum={
+            type !== "pfx"
+              ? (type = "next") => changeQuestionNum(type)
+              : () => {
+                console.log("no ques data");
+              }
+          }
           questionNum={questionNum}
           dataArray={dataArray}
           play={startInterval}
           stop={stopInterval}
           timeGap={timeGap}
           changePlayIndex={(e, type = undefined) => {
-            console.log("change");
+            // console.log("change");
             if (type) {
               if (type === "backward") {
                 if (e > 9) {
@@ -497,7 +637,7 @@ const Sandbox = () => {
                 setTopLimit(dataArray.length);
                 setBottomLimit(0);
               } else if (type === "free") {
-                console.log("e", e);
+                // console.log("e", e);
                 index = e > 0 ? e - 1 : 0;
                 setBottomLimit(e);
                 playTheData();

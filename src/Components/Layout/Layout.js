@@ -7,6 +7,7 @@ import ChooseAction, {
 import Controls from "../Controls/Controls";
 import LoadData from "../LoadData/LoadData";
 import LogReader from "../LogReader/LogReader";
+import Pfx from "../pfx/Pfx";
 import Sandbox from "../SandBox/SandBox";
 import "./Layout.css";
 const Layout = () => {
@@ -16,6 +17,7 @@ const Layout = () => {
       {data.selectedMethod === "choose" && <ChooseAction />}
       {data.selectedMethod === "visualization" && <Visualization />}
       {data.selectedMethod === "analyze" && <Analyze />}
+      {data.selectedMethod === "pfx" && <Pfx />}
     </div>
   );
 };
