@@ -20,7 +20,7 @@ const Pfx = () => {
 
   const processResultsData = (rawData) => {
     if (!rawData || rawData.length === 0) {
-      throw new Error("Empty or invalid results file");
+      throw new Error("Empty orr invalid results file");
     }
     const feedbackId = rawData[0]["PatientFeedbackId"];
     if (!feedbackId || !rawData.every((row) => row["PatientFeedbackId"] === feedbackId)) {
